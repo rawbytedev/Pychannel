@@ -89,18 +89,3 @@ class filo:
     def size(self):
         return self.values.__len__()
 
-if __name__ == "__main__":
-    fif = fifo(obj=str, cap=2)
-    fif.add("hello")
-    fif.add("buy")
-    fif.add("hello2") ## not added because of limit ## need blocking; block
-    print(fif.pop())
-    fif.add(12)
-    print(fif.pop())
-    fif.add("hello2")
-    fif.add("buy2")
-    fif.add("hello3")
-    fif.add("buy3")
-    fif.add("sell")
-    #fif.rem("hello")
-    fif.log()
