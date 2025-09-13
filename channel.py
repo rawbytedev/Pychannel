@@ -4,8 +4,14 @@ import multiprocessing as mp
 class Channel:
     ## two type of init for main / subprocess
     ## make(chan type, capacity)
+    ## if num of items == capacity block()
+    ## channels are FIFO(First In First Out)
     def __init__(self, type:str, main:bool= True, con = None, capacity:int =None):
         ## self.con is used by receiver and self.child by sender
+        
+        if capacity != None:
+            self.cap = capacity
+            self.values:list[object]    
         self.type = type
         if con != None:
             self.child = con
@@ -16,7 +22,7 @@ class Channel:
     def Child(self):
         if self.main:
             return self.child
-        
+     
     def Parent(self):
         if not self.main:
             return self.con
@@ -35,4 +41,5 @@ class Channel:
                 self.con.send(("good", "yes"))
                 return payload
     
-    def capstore(self):
+    def capstore(self, value):
+        self.values
