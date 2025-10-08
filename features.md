@@ -1,0 +1,6 @@
+- [ ] Buffered channels integrated with `fifo`  
+- [ ] Flexible child-master assignement
+- [ ] `select`‑like API for waiting on multiple channels  
+- [ ] Rich error handling (`ChannelClosedError`, `DeadlockError`)  
+- [ ] Async/await integration for modern Python concurrency  
+- [ ] Real‑world demos (task queues, pipelines, agent communication)

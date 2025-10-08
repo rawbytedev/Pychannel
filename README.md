@@ -34,7 +34,7 @@ from pychannel import Channel
 import multiprocessing
 
 def worker(conn):
-    ch = Channel("str", main=False, con=conn)
+    ch = Channel("str", main=False, conn=conn)
     ch.send("Hello from subprocess!")
 
 if __name__ == "__main__":
