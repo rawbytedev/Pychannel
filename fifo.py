@@ -25,37 +25,41 @@ class fifo:
     def __init__(self, cap:int,obj:object):
         self.cap = cap
         self.obj = obj
-        self.values:list[object] =[]
+        self.values:list[self.obj] =[] ## change list to use fifo instead
         
-    
     def isObj(self, val) -> bool:
         if type(val) == self.obj:
             return True
         return False
-    ## it tells us whether we can add or not if not possible we block until it is free
     
+    ## it tells us whether we can add or not if not possible we block until it is free
+    ## right now this is the only way
+    ## looping to block? need a new way to block 
     def CanAdd(self) -> bool:
-        if self.values.__len__() == self.cap:
+        if len(self.values) == self.cap:
             return False
-        if self.values.__len__() < self.cap:
+        if len(self.values) < self.cap:
             return True
         ## avoid adding if impossible
         return False
+    
     def add(self, value):
         if self.isObj(value):
             if self.CanAdd():
                 self.values.append(value)
                 return
+
     def pop(self) -> object : 
-        #self.values.remove(value)
         return self.values.pop(0)
-    ## need to change to manual logging of size
+    
+    ## fifo.log is for debugging
     def log(self) -> list[object]:
         return self.values
+    
     def size(self):
-        return self.values.__len__()
+        return len(self.values)
 
-## first add item is removed last 
+## first added item is removed last 
 class filo:
     def __init__(self, cap:int,obj:object):
         self.cap = cap
@@ -69,23 +73,26 @@ class filo:
     ## it tells us whether we can add or not if not possible we block until it is free
     
     def CanAdd(self) -> bool:
-        if self.values.__len__() == self.cap:
+        if len(self.values) == self.cap:
             return False
-        if self.values.__len__() < self.cap:
+        if len(self.values) < self.cap:
             return True
         ## avoid adding if impossible
         return False
+    
     def add(self, value):
         if self.isObj(value):
             if self.CanAdd():
                 self.values.append(value)
                 return
+            
     def pop(self) -> object : 
         #self.values.remove(value)
         return self.values.pop()
     ## need to change to manual logging of size
     def log(self) -> list[object]:
         return self.values
+    
     def size(self):
-        return self.values.__len__()
+        return len(self.values)
 
