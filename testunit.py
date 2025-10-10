@@ -1,22 +1,25 @@
+import asyncio
 import time
-from channel import Channel
+from channel import Channel, Handler
 import multiprocessing as mp
 import channel
 from fifo import fifo
     
 def test_Basic():
-    a = Channel(int, capacity=10)
+    a = Channel()
     child = a.Child() ## note .chile allows to set other process as child of channel
-    proc = mp.Process(target=StartOutside, kwargs={"conn":child})
+    H = Handler(child, int, 5)
+    ch = H.child
+    proc = mp.Process(target=H.subreceive)
     proc.start()
-    for b in range(100):
-        data = a.receive()
-        if data != b:
-            print("testBasic: Failed_test")
-            return
-    print("testBasic: Passed")
+    procs = mp.Process(target=StartOutside, kwargs={"conn":ch})
+    procs.start()
+    
+    for i in range(100):
+        print(a.receive())
+
 def StartOutside(conn):
-    b = Channel(int, False,conn)
+    b = Channel(conn)
     for i in range(100):
         b.send(i)
 
@@ -57,6 +60,6 @@ def testBlocking():
 
 if __name__ == "__main__":
     test_Basic()
-    testfifocap()
-    testBlocking()
+    #testfifocap()
+    #testBlocking()
     

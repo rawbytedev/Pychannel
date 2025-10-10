@@ -25,7 +25,7 @@ class fifo:
     def __init__(self, cap:int,obj:object):
         self.cap = cap
         self.obj = obj
-        self.values:list[self.obj] =[] ## change list to use fifo instead
+        self.values:list[obj] =[] ## change list to use fifo instead
         
     def isObj(self, val) -> bool:
         if type(val) == self.obj:
@@ -48,7 +48,7 @@ class fifo:
             if self.CanAdd():
                 self.values.append(value)
                 return
-
+        return TypeError
     def pop(self) -> object : 
         return self.values.pop(0)
     
@@ -85,6 +85,7 @@ class filo:
             if self.CanAdd():
                 self.values.append(value)
                 return
+        return TypeError
             
     def pop(self) -> object : 
         #self.values.remove(value)
