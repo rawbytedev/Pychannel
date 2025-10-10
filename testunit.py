@@ -1,5 +1,6 @@
 import asyncio
 import time
+
 from channel import Channel, Handler
 import multiprocessing as mp
 import channel
@@ -10,6 +11,7 @@ def test_Basic():
     child = a.Child() ## note .chile allows to set other process as child of channel
     H = Handler(child, int, 5)
     ch = H.child
+    ## the ideal scenario is having Pychannel start those Process itselfs
     proc = mp.Process(target=H.subreceive)
     proc.start()
     procs = mp.Process(target=StartOutside, kwargs={"conn":ch})
@@ -17,11 +19,12 @@ def test_Basic():
     
     for i in range(100):
         print(a.receive())
-
+    a.close()
 def StartOutside(conn):
     b = Channel(conn)
     for i in range(100):
         b.send(i)
+    b.close()
 
 
 def testfifocap():

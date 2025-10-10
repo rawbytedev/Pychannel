@@ -1,5 +1,4 @@
-from ast import Store
-import asyncio
+
 import multiprocessing as mp
 from multiprocessing import process
 from multiprocessing.connection import PipeConnection
@@ -39,8 +38,15 @@ class Channel:
         if cmd == "ERROR":
             print(payload)
         if cmd == "CLOSE":
-            return "Closed"
+            return 
         return
+    def close(self):
+        while True:
+            self.conn.send(("CLOSE", "data"))
+            cmd, payload = self.conn.recv()
+            if cmd == "CLOSE":
+                self.conn.close()
+                return
     ## used by subprocess
     def send(self, val):
         cmd, payload = self.conn.recv()
@@ -89,22 +95,42 @@ class Handler:
     def subreceive(self):
         self.subconn.send(("RECEIVE", "Waiting")) ## subprocess waits for signal # does'nt need to send just signal that channel is open
         while self.chan == False:
-            while self.isAdd():
+            while self.isAdd() and self.chan == False:
                 if self.subconn.poll(0.1):
-                    cmd, payload = self.subconn.recv()
-                    self.ProcessCMD(cmd, payload)
+                    if self.subconn.closed != True:
+                        cmd, payload = self.subconn.recv()
+                        self.ProcessCMD(cmd, payload)
                 if self.conn.poll(0.1):
-                    cmd, payload = self.conn.recv()
-                    self.ProcessCMD(cmd)
+                    if self.conn.closed != True:
+                        cmd, payload = self.conn.recv()
+                        self.ProcessCMD(cmd)
+
+        while self.chan:
+            if self.subconn.poll(0.1):
+                cmd, payload = self.subconn.recv()
+                self.ProcessCMD(cmd, payload)
+            if self.conn.poll(0.1):
+                cmd, payload = self.conn.recv()
+                self.ProcessCMD(cmd)
+            if self.size() == 0:
+                self.conn.send(("CLOSE", "cls"))
+                self.subconn.send(("CLOSE", "cls"))
+                self.conn.close()
+                self.subconn.close()
+                return
+                
         self.ProcessCMD("ERROR", "Channel is closed")
     
     def ProcessCMD(self,cmd, payload=""):
-        if cmd == "SEND": ## from subs
+        if cmd == "CLOSE":
+            self.chan = True
+        if cmd == "SEND" and self.chan == False: ## from subs
             err = self.fifoAdd(payload)
             if err == TypeError:
                 self.Destroy() ## close all and kill all sub
+        else:
             self.subconn.send(("RECEIVE", "pay"))
-        if cmd == "RECEIVE": ## from Main
+        if cmd == "RECEIVE": ## from Main(usually)
             if self.size() > 0:
                 self.conn.send(("SEND",self.fifoPop()))
             return
