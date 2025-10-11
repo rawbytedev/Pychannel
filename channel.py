@@ -174,7 +174,13 @@ class Handler:
         if cmd == "RECEIVE": ## from Main(usually)
             if self.size() > 0:
                 self.conn.send(("SEND",self.fifoPop()))
-            return
+            return ## this return breaks if child take too long to send data
+        ### Maybe use a tmp container to handle request that hasn't been handled yet
+        ### it seems like if the child doesn't send or take long to send 
+        ### The main blocks and is unable to receive(that's good) but
+        ### were going with a request <-> response model
+        ### so main request gets forgotten
+        ### should we do that for Childs too?
         if cmd == "ERROR": ## to main
             self.conn.send(("ERROR",payload))
 
