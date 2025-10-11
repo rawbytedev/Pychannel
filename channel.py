@@ -12,14 +12,33 @@ Main Process <-> Handler(FIFO) <-> []Childs
 Note: self.child is defined only if The channel initialized without conn
 """
 class Channel:
-    def __init__(self, conn =None):
+    
+    def __init__(self,conn =None, types=None, cap:int=0):
         self.isChild =False
+        self.cap = cap
         if conn == None:
+            if types == None:
+                print("type can't be None ")
+                return
+            self.types = types
             self.conn, self.child = mp.Pipe()
         else:
             self.isChild = True
             self.conn = conn
+
+    def initHandle(self):
+        H = Handler(self.child, int, 5)
+        proc = mp.Process(target=H.subreceive)
+        proc.start()
+        self.Hchild = H.child
     
+    def startSub(self, func, *args, **kwargs):
+        lkwargs: dict[str,Any] = {"conn":self.Hchild}
+        for i, val in kwargs:
+            lkwargs[i] = val
+        proc = mp.Process(target=func, args=args,kwargs=lkwargs)
+        proc.start()
+
     def Child(self):
         if self.isChild:
             return 
