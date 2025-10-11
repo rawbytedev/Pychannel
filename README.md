@@ -30,25 +30,39 @@ cd pychannel
 ### Basic Channel
 
 ```python
-from pychannel import Channel
-import multiprocessing
+import time
+from Pychannel import Channel
 
-def worker(conn):
-    ch = Channel("str", main=False, conn=conn)
-    ch.send("Hello from subprocess!")
 
+def LightProcessing(conn, data):
+    ch = Channel(conn=conn)
+    print("Child: Processing Data")
+    res = data
+    time.sleep(1)
+    ch.send(res)
+
+def Main():
+    data = input("")
+    ch = Channel(types=str, cap=2)
+    ch.initHandle()
+    ch.startSub(func=LightProcessing, data=data)
+    print("doing some other works")
+    time.sleep(5)
+    print("waiting for child results")
+    print(ch.receive()) ## blocks child stills needs 5 sec before finishing
+    ch.close() ## close channel after
 if __name__ == "__main__":
-    ch = Channel("str")
-    p = multiprocessing.Process(target=worker, args=(ch.Child(),))
-    p.start()
-    msg = ch.receive()
-    print("Main received:", msg)
-    p.join()
+    Main()
+
 ```
 
 **Output:**
 ```
-Main received: Hello from subprocess!
+<Input>
+doing some other works
+Child: Processing Data
+waiting for child results
+<Input>
 ```
 
 ---
@@ -69,11 +83,7 @@ print(q.pop())  # "second"
 
 ## Tests
 
-Run the included test suite:
-
-```bash
-pytest testunit.py -v
-```
+Tests are included in [Tests](./testunit.py)
 
 ---
 
@@ -85,29 +95,19 @@ pychannel/
 ├── channel.py        # Core Channel abstraction
 ├── fifo.py           # FIFO / LIFO buffer implementations
 ├── exceptions.py     # (planned) custom exceptions
-├── subproc.py        # (planned) orchestration helpers
+├── example.md        # contains list if applicable example with test code(currently all codes work)
 ├── testunit.py       # Demo + unit tests
 └── README.md
 ```
 
 ---
 
-## Roadmap
-
-- [ ] Buffered channels integrated with `fifo`  
-- [ ] `select`‑like API for waiting on multiple channels  
-- [ ] Rich error handling (`ChannelClosedError`, `DeadlockError`)  
-- [ ] Async/await integration for modern Python concurrency  
-- [ ] Real‑world demos (task queues, pipelines, agent communication)  
-
----
-
 ## Contributing
 
-Pull requests are welcome! For major changes, please open an issue first to discuss what you’d like to add.  
+Pull requests are welcome! For major changes, Improvements, or Suggestions please open an issue first to discuss what you’d like to add.
 
 ---
 
 ## License
 
-MIT License. See [LICENSE](LICENSE) for details.
+License. See [LICENSE](LICENSE) for details.

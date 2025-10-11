@@ -35,8 +35,8 @@ class Channel:
     
     def startSub(self, func, *args, **kwargs):
         lkwargs: dict[str,Any] = {"conn":self.Hchild}
-        for i, val in kwargs:
-            lkwargs[i] = val
+        for i in kwargs:
+            lkwargs[i] = kwargs[i]
         proc = mp.Process(target=func, args=args,kwargs=lkwargs)
         proc.start()
 
@@ -60,8 +60,10 @@ class Channel:
         if cmd == "ERROR_CLOSE":
             self.conn.close()
         if cmd == "CLOSE":
-            print("cLOSE") 
-        print("non")
+            return 
+            #print("cLOSE") 
+        #print("non")
+        return 
     def close(self):
         while True:
             self.conn.send(("CLOSE", "data"))
