@@ -32,6 +32,8 @@ class fifo:
             return True
         return False
     
+    def obj(self):
+        return self.obj
     ## it tells us whether we can add or not if not possible we block until it is free
     ## right now this is the only way
     ## looping to block? need a new way to block 
@@ -58,6 +60,9 @@ class fifo:
     
     def size(self):
         return len(self.values)
+    
+    def empty(self):
+        self.values = []
 
 ## first added item is removed last 
 class filo:
@@ -97,3 +102,9 @@ class filo:
     def size(self):
         return len(self.values)
 
+def testtype(types:object):
+    a = fifo(cap = 5,obj=types)
+    print(a.add("hi"))
+
+if __name__ == "__main__":
+    testtype(str)

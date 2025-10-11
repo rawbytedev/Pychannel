@@ -13,8 +13,9 @@ Note: self.child is defined only if The channel initialized without conn
 """
 class Channel:
     
-    def __init__(self,conn =None, types=None, cap:int=0):
+    def __init__(self,conn =None, types:object=None, cap:int=0):
         self.isChild =False
+        self.chan = True
         self.cap = cap
         if conn == None:
             if types == None:
@@ -27,7 +28,7 @@ class Channel:
             self.conn = conn
 
     def initHandle(self):
-        H = Handler(self.child, int, 5)
+        H = Handler(self.child, self.types, 5)
         proc = mp.Process(target=H.subreceive)
         proc.start()
         self.Hchild = H.child
@@ -55,15 +56,18 @@ class Channel:
         if cmd == "SEND":
             return payload
         if cmd == "ERROR":
-            print(payload)
+            print(payload) ## output to users Handler will take care of closing all channels and blocking
+        if cmd == "ERROR_CLOSE":
+            self.conn.close()
         if cmd == "CLOSE":
-            return 
-        return
+            print("cLOSE") 
+        print("non")
     def close(self):
         while True:
             self.conn.send(("CLOSE", "data"))
             cmd, payload = self.conn.recv()
             if cmd == "CLOSE":
+                self.chan = False
                 self.conn.close()
                 return
     ## used by subprocess
@@ -71,6 +75,12 @@ class Channel:
         cmd, payload = self.conn.recv()
         if cmd == "RECEIVE":
             self.conn.send(("SEND", val))
+        if cmd == "ERROR_CLOSE":
+            self.conn.close()
+    
+    def isChan(self):
+        return self.chan
+
 """
 Receive request from Main process and Childs
 currently that's the only way I found to ensure blocks works for buffered channels
@@ -104,7 +114,8 @@ class Handler:
         self.types = types
         self.cap = cap
         self.chan = False
-        self.store = fifo(cap, types)
+        self.err =False
+        self.store = fifo(cap=cap, obj=types)
         self.subconn, self.child = mp.Pipe()
     
     def startchild(self,func, *args):
@@ -125,24 +136,33 @@ class Handler:
                         self.ProcessCMD(cmd)
 
         while self.chan:
-            if self.subconn.poll(0.1):
-                cmd, payload = self.subconn.recv()
-                self.ProcessCMD(cmd, payload)
-            if self.conn.poll(0.1):
-                cmd, payload = self.conn.recv()
-                self.ProcessCMD(cmd)
+            if self.err == False: ## no error
+                if self.subconn.poll(0.1):
+                    cmd, payload = self.subconn.recv()
+                    self.ProcessCMD(cmd, payload)
+                if self.conn.poll(0.1):
+                    cmd, payload = self.conn.recv()
+                    self.ProcessCMD(cmd)
+            else:
+                self.subconn.send(("ERROR_CLOSE", "none"))
+                self.conn.send(("ERROR_CLOSE","none"))
             if self.size() == 0:
                 self.conn.send(("CLOSE", "cls"))
                 self.subconn.send(("CLOSE", "cls"))
                 self.conn.close()
                 self.subconn.close()
-                return
-                
+                return  
         self.ProcessCMD("ERROR", "Channel is closed")
     
     def ProcessCMD(self,cmd, payload=""):
         if cmd == "CLOSE":
             self.chan = True
+
+        if cmd == "ERROR_CLOSE":
+            self.fifoclear()
+            self.err =True
+            self.chan =True
+
         if cmd == "SEND" and self.chan == False: ## from subs
             err = self.fifoAdd(payload)
             if err == TypeError:
@@ -154,17 +174,23 @@ class Handler:
                 self.conn.send(("SEND",self.fifoPop()))
             return
         if cmd == "ERROR": ## to main
-            self.conn.send(payload)
-        
+            self.conn.send(("ERROR",payload))
+
+    ## If call initialize ERROR to MAIN and close ALL 
     def Destroy(self):
-        print("Destroying")
-        pass
+        self.ProcessCMD("ERROR", "Incorect type sent through Channel")
+        self.ProcessCMD("ERROR_CLOSE", "TypeError")
+
     def fifoAdd(self, value):
         return self.store.add(value)
     
     def fifoPop(self):
         return self.store.pop()
+    def fifoclear(self):
+        return self.store.empty()
     def size(self):
         return self.store.size()
     def isAdd(self):
         return self.store.CanAdd()
+    def fifoobj(self):
+        return self.store.obj()
